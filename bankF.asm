@@ -2,25 +2,25 @@
 
 { ;E4BF - E4EB
 rng:
-    inc $0202
-    ror $0201
-    ror $0200
-    lda $0201
+    inc rng+2
+    ror rng+1
+    ror rng+0
+    lda rng+1
     sec
     sbc $22
     clc
     adc $1B
     eor $02
-    eor $0200
-    sta $0201
-    lda $0200
+    eor rng+0
+    sta rng+1
+    lda rng+0
     clc
     adc $1A
-    adc $0202
-    eor $0201
+    adc rng+2
+    eor rng+1
     sec
     sbc $23
-    sta $0200
+    sta rng+0
     rts
 }
 
@@ -37,7 +37,7 @@ _1EEEB:
     iny
     adc ($48),Y
     sta $1B
-    lda #$C0 : sta $22
+    lda #$C0 : sta $22 ;looks like a 16-bit pointer
     lda #$63 : sta $23
     lda $F3EA,X
     clc
@@ -94,7 +94,7 @@ _1EEEB:
     clc
     adc #$04
     tay
-    jsr $F30F
+    jsr _1F30F
     ldy #$00
     lda ($22),Y
     beq .EF98
@@ -204,7 +204,7 @@ _1EEEB:
 
     sta $24
     sta waldo_x
-    jsr $F26A
+    jsr _1F26A
     bcs .F01F
 
     lda $7185
@@ -216,7 +216,7 @@ _1EEEB:
     lda $7186 : sta $7180
     dec $7185
 .F067:
-    jsr $F1AC
+    jsr _1F169_F1AC
 .F06A:
     ldy #$05
     lda ($4B),Y
@@ -268,7 +268,7 @@ _1EEEB:
     lda $6880,X
     beq .F0DF
 
-    jsr $F169
+    jsr _1F169
     bcs .F0DF
 
     ldy $51
@@ -302,7 +302,7 @@ _1EEEB:
     lda #$60 : sta $2B
     lda $4F : clc : adc #$04 : tax
     lda $9EFE,X : clc : adc #$80 : sta $1A
-    lda $9EE0,X :       adc #$49 : sta $1B
+    lda $9EE0,X       : adc #$49 : sta $1B
     jsr .F13E
     lda #$20 : sta $2A
     lda #$60 : sta $2B
@@ -315,7 +315,7 @@ _1EEEB:
     adc #$04
     tax
     lda $9EFE,X : clc : adc #$80 : sta $1A
-    lda $9EE0,X :       adc #$4D : sta $1B
+    lda $9EE0,X       : adc #$4D : sta $1B
 .F13E:
     lda $50 : sec : sbc $4F : tax
 .F144:
@@ -339,6 +339,252 @@ _1EEEB:
     dex
     bne .F144
 
+    rts
+}
+
+{ ;F169 - F269
+_1F169:
+    lda $4F  : sta $22
+    lda #$00 : sta $23
+.F171:
+    lda #$00 : sta $24
+.F175:
+    jsr _1F26A
+    bcs .F192
+
+    ldy #$05
+    lda ($4B),Y
+    cmp #$40
+    bcc .F1AC
+
+    ldy $7185
+    bne .F192
+
+    and #$03
+    sta $7180
+    dec $7185
+    jmp .F1AC
+
+.F192:
+    inc $24
+    lda $24
+    cmp #$40
+    bne .F175
+
+    inc $23
+    inc $22
+    lda $22
+    ldy #$01
+    clc
+    adc ($4B),Y
+    cmp $50
+    beq .F171
+    bcc .F171
+
+    rts
+
+.F1AC:
+    jsr rng : and #$03 : sta $7181
+    ldx $23
+    lda $F3EA,X : clc : adc #$C0 : sta $1A
+    lda $F408,X       : adc #$63 : sta $1B
+    lda $1A     : clc : adc $24  : sta $1A
+    bcc .F1D0
+
+    inc $1B
+.F1D0:
+    lda $F3EA,X : clc : adc #$00 : sta $2A
+    lda $F408,X       : adc #$60 : sta $2B
+    lda $2A     : clc : adc $24  : sta $2A
+    bcc .F1EA
+
+    inc $2B
+.F1EA:
+    ldy #$02
+    lda ($4B),Y : sta $26
+    iny
+    lda ($4B),Y : sta $27
+    ldy #$01
+    lda ($4B),Y : sta $1C
+.F1FB:
+    ldy #$00
+    lda ($4B),Y : sta $1D
+.F201:
+    lda ($26),Y : sta ($2A),Y
+    lda #$01    : sta ($1A),Y
+    iny
+    dec $1D
+    bne .F201
+
+    ldy #$00
+    lda ($4B),Y : sta $1D
+    lda $24 : pha
+    lda $1A : pha
+.F21A:
+    ldx $24
+    lda $22
+    clc
+    adc #$04
+    tay
+    jsr _1F30F
+    ldy $7181
+    lda $7185
+    beq .F230
+
+    ldy $7180
+.F230:
+    jsr _1F339
+    inc $24
+    dec $1D
+    bne .F21A
+
+    pla : sta $1A
+    pla : sta $24
+    lda $1A : clc : adc #$40 : sta $1A
+    bcc .F24A
+
+    inc $1B
+.F24A:
+    lda $2A : clc : adc #$40 : sta $2A
+    bcc .F255
+
+    inc $2B
+.F255:
+    ldy #$00
+    lda ($4B),Y : clc : adc $26 : sta $26
+    bcc .F262
+
+    inc $27
+.F262:
+    inc $22
+    dec $1C
+    bne .F1FB
+
+    clc
+    rts
+}
+
+{ ;F26A - F30E
+_1F26A:
+    lda $22 : pha
+    ldx $23
+    lda $F3EA,X : clc : adc #$C0 : sta $1A
+    lda $F408,X       : adc #$63 : sta $1B
+    lda $1A     : clc : adc $24  : sta $1A
+    bcc .F289
+
+    inc $1B
+.F289:
+    ldy #$01
+    lda ($4B),Y : sta $1C
+    lda #$00    : sta $7185
+.F294:
+    ldy #$00
+    lda ($4B),Y : sta $1D
+.F29A:
+    lda ($1A),Y
+    bne .F30A
+
+    iny
+    dec $1D
+    bne .F29A
+
+    lda $24
+    pha
+    ldy #$00
+    lda ($4B),Y : sta $1D
+.F2AC:
+    lda $22
+    clc
+    adc #$04
+    tay
+    ldx $24
+    jsr _1F30F
+    ldy $7185
+    bne .F2CF
+
+    tay
+    lda $6800,X
+    and $7182
+.F2C3:
+    cmp #$04
+    bcc .F2CB
+
+    lsr #2
+    bne .F2C3
+
+.F2CB:
+    sta $7180
+    tya
+.F2CF:
+    ora $7185
+    sta $7185
+    lda $6800,X
+    and $7182
+.F2DB:
+    cmp #$04
+    bcc .F2E3
+
+    lsr #2
+    bne .F2DB
+
+.F2E3:
+    cmp $7180
+    bne .F307
+
+    inc $24
+    dec $1D
+    bne .F2AC
+
+    pla : sta $24
+    lda $1A : clc : adc #$40 : sta $1A
+    bcc .F2FC
+
+    inc $1B
+.F2FC:
+    inc $22
+    dec $1C
+    bne .F294
+
+    pla : sta $22
+    clc
+    rts
+
+.F307:
+    pla : sta $24
+.F30A:
+    pla : sta $22
+    sec
+    rts
+}
+
+{ ;F30F - F338
+_1F30F:
+    lda $F444,X : clc : adc $F426,Y : sta $7184
+    tya
+    and #$02
+    bne .F324
+
+    lda $F484,X
+    jmp .F327
+
+.F324:
+    lda $F4C4,X
+.F327:
+    sta $7182
+    eor #$FF
+    sta $7183
+    ldx $7184
+    lda $6780,X
+    and $7182
+    rts
+}
+
+{ ;F339 - F357
+_1F339:
+    lda mask,Y  : and $7182               : sta $1A
+    lda $6800,X : and $7183 : ora $1A     : sta $6800,X
+    lda #$FF    : and $7182 : ora $6780,X : sta $6780,X
     rts
 }
 

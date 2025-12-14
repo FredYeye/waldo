@@ -4,6 +4,8 @@
     pad_input_2 = $0007
     timer       = $0012
 
+    rng = $200
+
     difficulty = $0600
 
     ;prg ram
